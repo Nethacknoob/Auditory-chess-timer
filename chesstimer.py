@@ -1,111 +1,207 @@
 import tkinter as tk
 
-#### Starting times: 30 minutes each
-time1 = 30 * 60.0
-time2 = 30 * 60.0
+# -----------------------
+# Timer settings
+# -----------------------
+START_TIME = 30 * 60  # 30 minutes in seconds
 
-running = False
-active_player = 1
+white_time = START_TIME
+black_time = START_TIME
+
+active_player = None
+game_started = False
+timer_job = None
 
 
+# -----------------------
+# Display time as MM:SS
+# -----------------------
 def format_time(seconds):
-    minutes = int(seconds // 60)
-    remaining_seconds = seconds % 60
+    minutes = seconds // 60
+    secs = seconds % 60
+    return f"{minutes:02}:{secs:02}"
 
-    return f"{minutes:02}:{remaining_seconds:05.2f}"
 
-
+# -----------------------
+# Update timer
+# -----------------------
 def update_timer():
-    global time1, time2
+    global white_time, black_time, timer_job
 
-    if running:
+    if not game_started:
+        return
 
-        if active_player == 1:
-            if time1 > 0:
-                time1 -= 0.01
+    if active_player == "white":
+        if white_time > 0:
+            white_time -= 1
+            white_timer.config(text=format_time(white_time))
+        else:
+            white_timer.config(text="00:00")
+            stop_game()
+            return
 
-        elif active_player == 2:
-            if time2 > 0:
-                time2 -= 0.01
+    elif active_player == "black":
+        if black_time > 0:
+            black_time -= 1
+            black_timer.config(text=format_time(black_time))
+        else:
+            black_timer.config(text="00:00")
+            stop_game()
+            return
 
-        timer1_label.config(text=format_time(time1))
-        timer2_label.config(text=format_time(time2))
-
-        # Update every 10 milliseconds
-        window.after(10, update_timer)
-
-
-def start_timer():
-    global running
-
-    if not running:
-        running = True
-        update_timer()
+    timer_job = root.after(1000, update_timer)
 
 
-def switch_timer():
+# -----------------------
+# Start game
+# -----------------------
+def start_game():
+    global game_started, active_player
+
+    if game_started:
+        return
+
+    game_started = True
+    active_player = "white"
+
+    status_label.config(text="White's turn")
+
+    start_button.config(state="disabled")
+    switch_button.config(state="normal")
+
+    update_timer()
+
+
+# -----------------------
+# Switch clocks
+# -----------------------
+def switch_player(event=None):
     global active_player
 
-    if running:
-        if active_player == 1:
-            active_player = 2
-        else:
-            active_player = 1
+    if not game_started:
+        return
+
+    if active_player == "white":
+        active_player = "black"
+        status_label.config(text="Black's turn")
+
+    elif active_player == "black":
+        active_player = "white"
+        status_label.config(text="White's turn")
 
 
-# ---------------- GUI ----------------
+# -----------------------
+# Stop game
+# -----------------------
+def stop_game():
+    global game_started, active_player
 
-window = tk.Tk()
-window.title("Chess Timer")
-window.geometry("600x400")
+    game_started = False
+    active_player = None
+
+    status_label.config(text="Time's up!")
+    switch_button.config(state="disabled")
 
 
-player1_label = tk.Label(
-    window,
-    text="Player 1",
-    font=("Arial", 20)
+# -----------------------
+# GUI
+# -----------------------
+root = tk.Tk()
+root.title("Chess Timer")
+root.geometry("600x400")
+
+# Title
+title_label = tk.Label(
+    root,
+    text="Chess Timer",
+    font=("Arial", 28, "bold")
 )
-player1_label.pack()
+title_label.pack(pady=20)
 
-timer1_label = tk.Label(
-    window,
-    text="30:00.00",
-    font=("Arial", 50)
+
+# Timer area
+timer_frame = tk.Frame(root)
+timer_frame.pack(pady=20)
+
+
+# White
+white_frame = tk.Frame(timer_frame)
+white_frame.grid(row=0, column=0, padx=50)
+
+white_name = tk.Label(
+    white_frame,
+    text="WHITE",
+    font=("Arial", 18, "bold")
 )
-timer1_label.pack(pady=10)
+white_name.pack()
 
-
-player2_label = tk.Label(
-    window,
-    text="Player 2",
-    font=("Arial", 20)
+white_timer = tk.Label(
+    white_frame,
+    text="30:00",
+    font=("Arial", 45)
 )
-player2_label.pack()
+white_timer.pack()
 
-timer2_label = tk.Label(
-    window,
-    text="30:00.00",
-    font=("Arial", 50)
+
+# Black
+black_frame = tk.Frame(timer_frame)
+black_frame.grid(row=0, column=1, padx=50)
+
+black_name = tk.Label(
+    black_frame,
+    text="BLACK",
+    font=("Arial", 18, "bold")
 )
-timer2_label.pack(pady=10)
+black_name.pack()
 
+black_timer = tk.Label(
+    black_frame,
+    text="30:00",
+    font=("Arial", 45)
+)
+black_timer.pack()
+
+
+# Status
+status_label = tk.Label(
+    root,
+    text="Press Start Game",
+    font=("Arial", 16)
+)
+status_label.pack(pady=10)
+
+
+# Buttons
+button_frame = tk.Frame(root)
+button_frame.pack(pady=20)
 
 start_button = tk.Button(
-    window,
-    text="Start",
-    font=("Arial", 18),
-    command=start_timer
+    button_frame,
+    text="Start Game",
+    font=("Arial", 16),
+    width=12,
+    command=start_game
 )
-start_button.pack(pady=10)
-
+start_button.grid(row=0, column=0, padx=10)
 
 switch_button = tk.Button(
-    window,
+    button_frame,
     text="Switch",
-    font=("Arial", 18),
-    command=switch_timer
+    font=("Arial", 16),
+    width=12,
+    command=switch_player,
+    state="disabled"
 )
-switch_button.pack(pady=10)
+switch_button.grid(row=0, column=1, padx=10)
 
 
-window.mainloop()
+# -----------------------
+# Keyboard controls
+# -----------------------
+
+# Spacebar switches clocks
+root.bind("<space>", switch_player)
+
+
+# Start GUI
+root.mainloop()
