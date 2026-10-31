@@ -1,6 +1,6 @@
 import tkinter as tk
 
-# Starting times: 30 minutes each
+#### Starting times: 30 minutes each
 time1 = 30 * 60.0
 time2 = 30 * 60.0
 
